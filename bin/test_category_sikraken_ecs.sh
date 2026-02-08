@@ -97,21 +97,25 @@ fi
 ALL_BENCHMARKS=()
 
 if [[ -n "$CATEGORY_SET" ]]; then
-    while read -r pattern; do
-        [[ -z "$pattern" || "$pattern" =~ ^# ]] && continue
+    #Add lines from set excluding comments, empty lines and sort then place into array
+    mapfile -t PATTERNS < <(grep -v '^#' "$CATEGORY_SET" | grep -v '^$' | sort)
 
-        # Strip Windows carriage return
-        pattern_clean=$(echo "$pattern" | tr -d '\r')
+    for i in "${!PATTERNS[@]}"; do
+        #Only taking indices from array that divide evenly with shard count
+        if (( i % SHARD_COUNT != SHARD_INDEX )); then
+            continue
+        fi
+        #Read data from .set
+        pattern="${PATTERNS[$i]}"
 
-        # Find .yml files matching the basename anywhere under BENCHMARKS_SHARED
-        mapfile -t yml_files < <(find "$BENCHMARKS_SHARED" -type f -name "$(basename "$pattern_clean")")
+        mapfile -t yml_files < <(find "$BENCHMARKS_SHARED" -type f -name "$(basename "$pattern")" | sort)
 
         if [[ ${#yml_files[@]} -eq 0 ]]; then
-            echo "No files matching '$pattern_clean' were found in $BENCHMARKS_SHARED."
+            echo "No files matching '$pattern' were found in $BENCHMARKS_SHARED."
             continue
         fi
 
-        echo "Processing pattern from .set: '$pattern_clean'"
+        echo "Processing pattern from .set: '$pattern'"
         echo "Found .yml files:"
         printf '  %s\n' "${yml_files[@]}"
 
@@ -119,15 +123,14 @@ if [[ -n "$CATEGORY_SET" ]]; then
             [[ ! -f "$yml" ]] && continue
 
             echo "Checking $yml for coverage property..."
-            if grep -q 'coverage-branches\.prp' "$yml"; then
-                echo "Contains coverage property"
-            else
+            if ! grep -q 'coverage-branches\.prp' "$yml"; then
                 echo "Skipped: missing coverage property"
                 continue
             fi
+            echo "Contains coverage property"
 
             benchmark_name=$(grep "^input_files:" "$yml" \
-                         | sed -n "s/^[[:space:]]*input_files:[[:space:]]*['\"]\?\([^'\"].*[^'\"]\)['\"]\?/\1/p")
+                             | sed -n "s/^[[:space:]]*input_files:[[:space:]]*['\"]\?\([^'\"].*[^'\"]\)['\"]\?/\1/p")
 
             if [[ -z "$benchmark_name" ]]; then
                 echo "WARNING: no input_files specified in $yml"
@@ -146,7 +149,7 @@ if [[ -n "$CATEGORY_SET" ]]; then
 
             ALL_BENCHMARKS+=( "$benchmark|$data_model" )
         done
-    done < "$CATEGORY_SET"
+    done
 fi
 
 echo "Resolved ${#ALL_BENCHMARKS[@]} benchmarks for category $CATEGORY"
@@ -160,12 +163,6 @@ TOTAL="${#ALL_BENCHMARKS[@]}"
 
 for entry in "${ALL_BENCHMARKS[@]}"; do
     IFS="|" read -r BENCH DATA_MODEL <<< "$entry"
-
-    # only processing benchmarks from array with given index from ecs script
-    if (( INDEX % SHARD_COUNT != SHARD_INDEX )); then
-        ((INDEX++))
-        continue
-    fi
 
     NAME="$(basename "$BENCH" .c)"
     OUTDIR="$RUN_OUTPUT_DIR/$NAME"
