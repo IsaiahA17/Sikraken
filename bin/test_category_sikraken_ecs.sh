@@ -19,6 +19,8 @@ STACK_SIZE_GB="${STACK_SIZE_GB:-3}"
 SHARD_INDEX="${SHARD_INDEX:-0}"
 SHARD_COUNT="${SHARD_COUNT:-1}"
 
+TIMESTAMP="${TIMESTAMP:-$(date -u +"%Y_%m_%d_%H_%M")}"
+
 S3_BUCKET_NAME="ecs-benchmarks-output"
 S3_BUCKET="${S3_BUCKET_NAME:?S3_BUCKET not set}"
 
@@ -149,8 +151,8 @@ fi
 
 echo "Resolved ${#ALL_BENCHMARKS[@]} benchmarks for category $CATEGORY"
 
-TIMESTAMP=$(date -u +"%Y_%m_%d_%H_%M")
-RUN_OUTPUT_DIR="$OUTPUT_SHARED/$CATEGORY/$TIMESTAMP/shard-$SHARD_INDEX"
+
+RUN_OUTPUT_DIR="$OUTPUT_SHARED/$CATEGORY/$TIMESTAMP"
 mkdir -p "$RUN_OUTPUT_DIR"
 
 INDEX=0
@@ -191,7 +193,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
 done
 copy_i_files_to_output
 
-S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}/${TIMESTAMP}/shard-${SHARD_INDEX}"
+S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}/${TIMESTAMP}"
 
 # Upload non-.i/.log files
 aws s3 sync "$RUN_OUTPUT_DIR" "$S3_PREFIX" --exclude "*.i" --exclude "*.log"
