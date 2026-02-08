@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+
+echo "Starting Sikraken ECS run..."
+
+echo "Waiting for benchmarks to be fully copied..."
+while [ ! -f /shared/benchmarks/.complete ]; do
+    sleep 1
+done
+echo "All benchmarks are present."
+
+echo "Benchmarks content in /shared/benchmarks:"
+ls /shared/benchmarks
+
+CATEGORY="${CATEGORY:-chris}"
+MODE="${MODE:-release}"
+BUDGET="${BUDGET:-900}"
+STACK_SIZE_GB="${STACK_SIZE_GB:-3}"
+
+SHARD_INDEX="${SHARD_INDEX:-0}"
+SHARD_COUNT="${SHARD_COUNT:-1}"
+
+S3_BUCKET_NAME="ecs-benchmarks-output"
+S3_BUCKET="${S3_BUCKET_NAME:?S3_BUCKET not set}"
+
+SIKRAKEN_ROOT="/app/sikraken"
+BENCHMARKS_SHARED="/shared/benchmarks"
+OUTPUT_SHARED="/shared/output"
+
+SIKRAKEN_SET_DIR="$SIKRAKEN_ROOT/categories"
+SHARED_SET_DIR="$BENCHMARKS_SHARED"
+
+run_sikraken() {
+    # Safe defaults
+    GCC_FLAG="${GCC_FLAG:-}"
+    BENCH="${BENCH:-}"
+
+    "$SIKRAKEN_ROOT/bin/sikraken.sh" \
+        "$MODE" \
+        "$GCC_FLAG" \
+        budget["$BUDGET"] \
+        --ss="$STACK_SIZE_GB" \
+        "$BENCH"
+}
+
+copy_i_files_to_output() {
+    echo "Copying .i files into benchmark output folders..."
+    
+    # Loop over all benchmark output folders
+    for d in "$RUN_OUTPUT_DIR"/*/; do
+        name=$(basename "$d")  # folder name matches benchmark basename
+        # .i files are expected to be in SIKRAKEN_OUTPUT_PATH/$name/$name.i
+        src_file="$SIKRAKEN_ROOT/sikraken_output/$name/$name.i"
+        
+        if [[ -f "$src_file" ]]; then
+            cp "$src_file" "$d"
+            echo "Copied $src_file → $d"
+        else
+            echo "WARNING: .i file not found: $src_file"
+        fi
+    done
+}
+
+CATEGORY_SET=""
+
+if [[ -f "$SIKRAKEN_SET_DIR/$CATEGORY.set" ]]; then
+    CATEGORY_SET="$SIKRAKEN_SET_DIR/$CATEGORY.set"
+    echo "Using internal container .set file: $CATEGORY_SET"
+elif [[ -f "$SHARED_SET_DIR/$CATEGORY.set" ]]; then
+    CATEGORY_SET="$SHARED_SET_DIR/$CATEGORY.set"
+    echo "Using shared benchmarks volume .set file: $CATEGORY_SET"
+else
+    echo "ERROR: .set file not found in either container or shared benchmarks: $CATEGORY.set"
+    CATEGORY_SET=""
+fi
+
+if [[ -n "$CATEGORY_SET" ]]; then
+    echo "Contents of chosen .set:"
+    cat "$CATEGORY_SET"
+else
+    echo "WARNING: No .set file found. Continuing without benchmarks."
+fi
+
+EXCLUDE_SET=""
+if [[ "$CATEGORY" == "ECA" ]]; then
+    EXCLUDE_SET="$SIKRAKEN_SET_DIR/ECA-excludes.set"
+    if [[ ! -f "$EXCLUDE_SET" ]]; then
+        echo "WARNING: Exclude set $EXCLUDE_SET not found. Continuing without excludes."
+        EXCLUDE_SET=""
+    else
+        echo "Using exclude set: $EXCLUDE_SET"
+    fi
+fi
+
+#Initialising benchmarks array
+ALL_BENCHMARKS=()
+
+if [[ -n "$CATEGORY_SET" ]]; then
+    while read -r pattern; do
+        [[ -z "$pattern" || "$pattern" =~ ^# ]] && continue
+
+        # Strip Windows carriage return
+        pattern_clean=$(echo "$pattern" | tr -d '\r')
+
+        # Find .yml files matching the basename anywhere under BENCHMARKS_SHARED
+        mapfile -t yml_files < <(find "$BENCHMARKS_SHARED" -type f -name "$(basename "$pattern_clean")")
+
+        if [[ ${#yml_files[@]} -eq 0 ]]; then
+            echo "No files matching '$pattern_clean' were found in $BENCHMARKS_SHARED."
+            continue
+        fi
+
+        echo "Processing pattern from .set: '$pattern_clean'"
+        echo "Found .yml files:"
+        printf '  %s\n' "${yml_files[@]}"
+
+        for yml in "${yml_files[@]}"; do
+            [[ ! -f "$yml" ]] && continue
+
+            echo "Checking $yml for coverage property..."
+            if grep -q 'coverage-branches\.prp' "$yml"; then
+                echo "Contains coverage property"
+            else
+                echo "Skipped: missing coverage property"
+                continue
+            fi
+
+            benchmark_name=$(grep "^input_files:" "$yml" \
+                         | sed -n "s/^[[:space:]]*input_files:[[:space:]]*['\"]\?\([^'\"].*[^'\"]\)['\"]\?/\1/p")
+
+            if [[ -z "$benchmark_name" ]]; then
+                echo "WARNING: no input_files specified in $yml"
+                continue
+            fi
+
+            benchmark="$(dirname "$yml")/$benchmark_name"
+
+            if [[ ! -f "$benchmark" ]]; then
+                echo "WARNING: benchmark .c file missing for $yml"
+                continue
+            fi
+
+            data_model=$(grep "data_model:" "$yml" \
+                         | sed -n "s/^[[:space:]]*data_model:[[:space:]]*\(.*\)/\1/p")
+
+            ALL_BENCHMARKS+=( "$benchmark|$data_model" )
+        done
+    done < "$CATEGORY_SET"
+fi
+
+echo "Resolved ${#ALL_BENCHMARKS[@]} benchmarks for category $CATEGORY"
+
+TIMESTAMP=$(date -u +"%Y_%m_%d_%H_%M")
+RUN_OUTPUT_DIR="$OUTPUT_SHARED/$CATEGORY/$TIMESTAMP/shard-$SHARD_INDEX"
+mkdir -p "$RUN_OUTPUT_DIR"
+
+INDEX=0
+TOTAL="${#ALL_BENCHMARKS[@]}"
+
+for entry in "${ALL_BENCHMARKS[@]}"; do
+    IFS="|" read -r BENCH DATA_MODEL <<< "$entry"
+
+    # only processing benchmarks from array with given index from ecs script
+    if (( INDEX % SHARD_COUNT != SHARD_INDEX )); then
+        ((INDEX++))
+        continue
+    fi
+
+    NAME="$(basename "$BENCH" .c)"
+    OUTDIR="$RUN_OUTPUT_DIR/$NAME"
+    mkdir -p "$OUTDIR"
+
+    # Set GCC flags safely
+    if [[ "$DATA_MODEL" == "ILP32" ]]; then
+        GCC_FLAG="-m32"
+    else
+        GCC_FLAG="-m64"
+    fi
+
+    echo "[$INDEX/$TOTAL] Running Sikraken on $BENCH ($DATA_MODEL)"
+
+    # Run Sikraken and log exit code, but do not fail script
+    run_sikraken > "$OUTDIR/sikraken.log" 2>&1
+    SIKRAKEN_EXIT=$?
+    if [[ $SIKRAKEN_EXIT -ne 0 ]]; then
+        echo "WARNING: Sikraken exited with code $SIKRAKEN_EXIT for $BENCH"
+    else
+        echo "Sikraken exited successfully for $BENCH"
+    fi
+
+    ((INDEX++))
+done
+copy_i_files_to_output
+
+S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}/${TIMESTAMP}/shard-${SHARD_INDEX}"
+
+# Upload non-.i/.log files
+aws s3 sync "$RUN_OUTPUT_DIR" "$S3_PREFIX" --exclude "*.i" --exclude "*.log"
+
+# Upload .i and .log files with text/plain content-type
+aws s3 sync "$RUN_OUTPUT_DIR" "$S3_PREFIX" \
+    --exclude "*" \
+    --include "*.i" \
+    --include "*.log" \
+    --content-type text/plain
+
+
+echo "Sikraken ECS run completed"
+echo "Container exiting cleanly"
+sleep 5
+exit 0
