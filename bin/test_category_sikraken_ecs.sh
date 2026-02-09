@@ -200,7 +200,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
 done
 copy_i_files_to_output
 
-S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}/${TIMESTAMP}"
+S3_PREFIX="s3://${S3_BUCKET}/${TIMESTAMP}"
 
 # Upload non-.i/.log files
 ls $RUN_OUTPUT_DIR
