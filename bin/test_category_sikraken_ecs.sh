@@ -32,20 +32,18 @@ SIKRAKEN_SET_DIR="$SIKRAKEN_ROOT/categories"
 SHARED_SET_DIR="$BENCHMARKS_SHARED"
 
 run_sikraken() {
-    cd "$BENCHMARKS_SHARED"
     #Removing /shared/benchmarks from full path to pass only the benchmark folder and file 
     BENCH_REL="${BENCH#$BENCHMARKS_SHARED/}"
 
     # Safe defaults
     GCC_FLAG="${GCC_FLAG:-}"
-    BENCH="${BENCH:-}"
 
     "$SIKRAKEN_ROOT/bin/sikraken.sh" \
         "$MODE" \
         "$GCC_FLAG" \
         budget["$BUDGET"] \
         --ss="$STACK_SIZE_GB" \
-        "$BENCH"
+        "$BENCH_REL"
 }
 
 copy_i_files_to_output() {
