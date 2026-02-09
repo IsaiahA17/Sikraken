@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo "Starting Sikraken ECS run..."
-
+echo "Verifying Most Correct Image Is Used"
 echo "Waiting for benchmarks to be fully copied..."
 while [ ! -f /shared/benchmarks/.complete ]; do
     sleep 1
@@ -32,18 +32,16 @@ SIKRAKEN_SET_DIR="$SIKRAKEN_ROOT/categories"
 SHARED_SET_DIR="$BENCHMARKS_SHARED"
 
 run_sikraken() {
-    #Removing /shared/benchmarks from full path to pass only the benchmark folder and file 
-    BENCH_REL="${BENCH#$BENCHMARKS_SHARED/}"
-
     # Safe defaults
     GCC_FLAG="${GCC_FLAG:-}"
+    BENCH="${BENCH:-}"
 
     "$SIKRAKEN_ROOT/bin/sikraken.sh" \
         "$MODE" \
         "$GCC_FLAG" \
         budget["$BUDGET"] \
         --ss="$STACK_SIZE_GB" \
-        "$BENCH_REL"
+        "$BENCH"
 }
 
 copy_i_files_to_output() {
