@@ -156,6 +156,7 @@ echo "Resolved ${#ALL_BENCHMARKS[@]} benchmarks for category $CATEGORY"
 
 
 RUN_OUTPUT_DIR="$OUTPUT_SHARED/$CATEGORY/$TIMESTAMP"
+ls $RUN_OUTPUT_DIR
 mkdir -p "$RUN_OUTPUT_DIR"
 
 INDEX=0
@@ -193,6 +194,7 @@ copy_i_files_to_output
 S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}/${TIMESTAMP}"
 
 # Upload non-.i/.log files
+ls $RUN_OUTPUT_DIR
 aws s3 sync "$RUN_OUTPUT_DIR" "$S3_PREFIX" --exclude "*.i" --exclude "*.log"
 
 # Upload .i and .log files with text/plain content-type
