@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
 
-echo "Starting Sikraken ECS run..."
-echo "Verifying Most Correct Image Is Used"
-echo "Waiting for benchmarks to be fully copied..."
-while [ ! -f /shared/benchmarks/.complete ]; do
-    sleep 1
-done
-echo "All benchmarks are present."
-
-echo "Benchmarks content in /shared/benchmarks:"
-ls /shared/benchmarks
-
 CATEGORY="${CATEGORY:-chris}"
 MODE="${MODE:-release}"
 BUDGET="${BUDGET:-900}"
@@ -30,6 +19,21 @@ OUTPUT_SHARED="/shared/output"
 
 SIKRAKEN_SET_DIR="$SIKRAKEN_ROOT/categories"
 SHARED_SET_DIR="$BENCHMARKS_SHARED"
+
+ls /shared/benchmarks
+
+echo "Starting Sikraken ECS run..."
+echo "Verifying Most Correct Image Is Used"
+echo "Waiting for benchmarks to be fully copied..."
+while [ ! -f /shared/benchmarks/.complete ]; do
+    sleep 1
+done
+echo "All benchmarks are present."
+
+if [ ! -L "$SIKRAKEN_ROOT/shared" ]; then
+    ln -s "$BENCHMARKS_SHARED" "$SIKRAKEN_ROOT/shared"
+    echo "Created symlink: $SIKRAKEN_ROOT/shared $BENCHMARKS_SHARED"
+fi
 
 run_sikraken() {
     # Safe defaults

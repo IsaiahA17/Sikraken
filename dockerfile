@@ -25,11 +25,8 @@ RUN wget https://eclipseclp.org/Distribution/Builds/7.1_13/x86_64_linux/eclipse_
 ENV ECLIPSEDIR=/app/sikraken/eclipse
 ENV PATH="$ECLIPSEDIR/bin/x86_64_linux:$PATH"
 
-RUN ln -s /shared/benchmarks /app/sikraken/shared
-
-COPY bin/test_category_sikraken_ecs.sh /app/bin/test_category_sikraken_ecs.sh
-RUN chmod +x /app/bin/test_category_sikraken_ecs.sh
+RUN chmod +x /app/sikraken/bin/test_category_sikraken_ecs.sh
 
 VOLUME ["/shared"]
 
-ENTRYPOINT ["/app/bin/test_category_sikraken_ecs.sh"]
+ENTRYPOINT ["/app/sikraken/bin/test_category_sikraken_ecs.sh"]
