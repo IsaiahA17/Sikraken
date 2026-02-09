@@ -154,7 +154,9 @@ fi
 
 echo "Resolved ${#ALL_BENCHMARKS[@]} benchmarks for category $CATEGORY"
 
-
+echo "TIMESTAMP: $TIMESTAMP"
+echo "CATEGORY: $CATEGORY"
+echo "SHARED_OUTPUT: $OUTPUT_SHARED"
 RUN_OUTPUT_DIR="$OUTPUT_SHARED/$CATEGORY/$TIMESTAMP"
 ls $RUN_OUTPUT_DIR
 mkdir -p "$RUN_OUTPUT_DIR"
@@ -166,7 +168,9 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     IFS="|" read -r BENCH DATA_MODEL <<< "$entry"
 
     NAME="$(basename "$BENCH" .c)"
+    echo: "NAME: $NAME"
     OUTDIR="$RUN_OUTPUT_DIR/$NAME"
+    echo "OUTDIR: $OUTDIR"
     mkdir -p "$OUTDIR"
 
     # Set GCC flags safely
