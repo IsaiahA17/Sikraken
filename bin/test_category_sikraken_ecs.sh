@@ -212,4 +212,5 @@ aws s3 sync "$RUN_OUTPUT_DIR" "$S3_PREFIX" \
 echo "Sikraken ECS run completed"
 echo "Container exiting cleanly"
 sleep 5
+echo "TEMPORARY DEBUG LINE"
 exit 0
