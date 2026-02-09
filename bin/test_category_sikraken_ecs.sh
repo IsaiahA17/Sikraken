@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ ! -e /app/sikraken/shared ]; then
+    ln -s /shared /app/sikraken/shared
+    echo "created symlink"
+fi
+
 CATEGORY="${CATEGORY:-chris}"
 MODE="${MODE:-release}"
 BUDGET="${BUDGET:-900}"
@@ -29,11 +34,6 @@ while [ ! -f /shared/benchmarks/.complete ]; do
     sleep 1
 done
 echo "All benchmarks are present."
-
-if [ ! -L "$SIKRAKEN_ROOT/shared" ]; then
-    ln -s "$BENCHMARKS_SHARED" "$SIKRAKEN_ROOT/shared"
-    echo "Created symlink: $SIKRAKEN_ROOT/shared $BENCHMARKS_SHARED"
-fi
 
 run_sikraken() {
     # Safe defaults
@@ -192,6 +192,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     SIKRAKEN_EXIT=$?
     if [[ $SIKRAKEN_EXIT -ne 0 ]]; then
         echo "WARNING: Sikraken exited with code $SIKRAKEN_EXIT for $BENCH"
+        ls /app/sikraken$BENCH
     else
         echo "Sikraken exited successfully for $BENCH"
     fi
