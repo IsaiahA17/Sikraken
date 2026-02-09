@@ -32,6 +32,10 @@ SIKRAKEN_SET_DIR="$SIKRAKEN_ROOT/categories"
 SHARED_SET_DIR="$BENCHMARKS_SHARED"
 
 run_sikraken() {
+    cd "$BENCHMARKS_SHARED"
+    #Removing /shared/benchmarks from full path to pass only the benchmark folder and file 
+    BENCH_REL="${BENCH#$BENCHMARKS_SHARED/}"
+
     # Safe defaults
     GCC_FLAG="${GCC_FLAG:-}"
     BENCH="${BENCH:-}"
@@ -167,10 +171,11 @@ TOTAL="${#ALL_BENCHMARKS[@]}"
 for entry in "${ALL_BENCHMARKS[@]}"; do
     IFS="|" read -r BENCH DATA_MODEL <<< "$entry"
 
+    #May need to account for .i  as well
     NAME="$(basename "$BENCH" .c)"
-    echo: "NAME: $NAME"
+    echo "NAME: $NAME"
     OUTDIR="$RUN_OUTPUT_DIR/$NAME"
-    echo "OUTDIR: $OUTDIR"
+    echo "OUTDIR: $OUTDIR"  
     mkdir -p "$OUTDIR"
 
     # Set GCC flags safely
