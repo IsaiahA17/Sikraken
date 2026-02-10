@@ -188,6 +188,8 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
 
     # Run Sikraken and log exit code, but do not fail script
     find "$SIKRAKEN_ROOT/shared/${BENCH#/shared/}"
+    find "$SIKRAKEN_ROOT/shared/shared/${BENCH#/shared/}"
+    find "$SIKRAKEN_ROOT/${BENCH#/shared/}"
     find "/shared/${BENCH#/shared/}"
     ls -l /app/sikraken/shared
     pwd
