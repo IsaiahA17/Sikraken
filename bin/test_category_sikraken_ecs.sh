@@ -39,7 +39,7 @@ run_sikraken() {
     # Safe defaults
     GCC_FLAG="${GCC_FLAG:-}"
     BENCH="${BENCH:-}"
-    benchmark_relative_path=$(realpath --relative-to="$SIKRAKEN_ROOT" "$BENCH")
+    benchmark_relative_path="shared/${BENCH#/shared/}"
 
     "$SIKRAKEN_ROOT/bin/sikraken.sh" \
         "$MODE" \
@@ -171,7 +171,6 @@ TOTAL="${#ALL_BENCHMARKS[@]}"
 for entry in "${ALL_BENCHMARKS[@]}"; do
     IFS="|" read -r BENCH DATA_MODEL <<< "$entry"
 
-    #May need to account for .i  as well
     NAME="$(basename "$BENCH")"
     echo "NAME: $NAME"
     OUTDIR="$RUN_OUTPUT_DIR/$NAME"
@@ -192,7 +191,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     SIKRAKEN_EXIT=$?
     if [[ $SIKRAKEN_EXIT -ne 0 ]]; then
         echo "WARNING: Sikraken exited with code $SIKRAKEN_EXIT for $BENCH"
-        find /app/sikraken$BENCH
+        find "$SIKRAKEN_ROOT/shared/${BENCH#/shared/}"
         ls /pthread-ext
     else
         echo "Sikraken exited successfully for $BENCH"
