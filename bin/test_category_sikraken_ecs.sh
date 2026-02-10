@@ -193,6 +193,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     if [[ $SIKRAKEN_EXIT -ne 0 ]]; then
         echo "WARNING: Sikraken exited with code $SIKRAKEN_EXIT for $BENCH"
         find /app/sikraken$BENCH
+        ls /pthread-ext
     else
         echo "Sikraken exited successfully for $BENCH"
     fi
