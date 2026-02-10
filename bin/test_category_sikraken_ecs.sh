@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-
+mkdir -p /app/sikraken/shared
 if [ ! -e /app/sikraken/shared ]; then
-    ln -s /shared /app/sikraken/shared
-    echo "created symlink"
-fi
+        ln -s /shared/benchmarks /app/sikraken/shared
+        echo "created symlink"
+    fi
+benchmark_relative_path="shared/${BENCH#/shared/}"
 
 CATEGORY="${CATEGORY:-chris}"
 MODE="${MODE:-release}"
