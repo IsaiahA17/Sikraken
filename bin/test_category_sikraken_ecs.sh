@@ -39,7 +39,14 @@ run_sikraken() {
     # Safe defaults
     GCC_FLAG="${GCC_FLAG:-}"
     BENCH="${BENCH:-}"
-    benchmark_relative_path="shared/${BENCH#/shared/}"
+
+    # --- Compute relative path to SIKRAKEN_INSTALL_DIR ---
+    if ! benchmark_relative_path=$(realpath --relative-to="$SIKRAKEN_ROOT" "$BENCH"); then
+        echo "ERROR: Failed to compute relative path for $BENCH"
+        return 1
+    fi
+
+    echo "Running Sikraken on $BENCH (relative path: $benchmark_relative_path)"
 
     "$SIKRAKEN_ROOT/bin/sikraken.sh" \
         "$MODE" \
