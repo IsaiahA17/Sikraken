@@ -192,7 +192,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     if [[ $SIKRAKEN_EXIT -ne 0 ]]; then
         echo "WARNING: Sikraken exited with code $SIKRAKEN_EXIT for $BENCH"
         find "$SIKRAKEN_ROOT/shared/${BENCH#/shared/}"
-        find "/app/shared/${BENCH#/shared/}"
+        find "/shared/${BENCH#/shared/}"
         pwd
     else
         echo "Sikraken exited successfully for $BENCH"
