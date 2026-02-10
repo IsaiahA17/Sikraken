@@ -187,13 +187,14 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     echo "[$INDEX/$TOTAL] Running Sikraken on $BENCH ($DATA_MODEL)"
 
     # Run Sikraken and log exit code, but do not fail script
+    find "$SIKRAKEN_ROOT/shared/${BENCH#/shared/}"
+    find "/shared/${BENCH#/shared/}"
+    ls -l /app/sikraken/shared
+    pwd
     run_sikraken > "$OUTDIR/sikraken.log" 2>&1
     SIKRAKEN_EXIT=$?
     if [[ $SIKRAKEN_EXIT -ne 0 ]]; then
         echo "WARNING: Sikraken exited with code $SIKRAKEN_EXIT for $BENCH"
-        find "$SIKRAKEN_ROOT/shared/${BENCH#/shared/}"
-        find "/shared/${BENCH#/shared/}"
-        pwd
     else
         echo "Sikraken exited successfully for $BENCH"
     fi
