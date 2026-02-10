@@ -5,6 +5,7 @@ WORKDIR /app
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y \
     wget curl unzip gcc ca-certificates \
     libncurses-dev libstdc++6 \
+    flex bison \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip \
@@ -26,7 +27,10 @@ ENV ECLIPSEDIR=/app/sikraken/eclipse
 ENV PATH="$ECLIPSEDIR/bin/x86_64_linux:$PATH"
 
 RUN chmod +x /app/sikraken/bin/test_category_sikraken_ecs.sh
+RUN chmod +x /app/sikraken/bin/test_category_sikraken_single_threaded.sh
 
 VOLUME ["/shared"]
 
-ENTRYPOINT ["/app/sikraken/bin/test_category_sikraken_ecs.sh"]
+WORKDIR /app/sikraken
+
+ENTRYPOINT ["./bin/test_category_sikraken_single_threaded.sh"]
