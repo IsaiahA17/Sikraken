@@ -39,13 +39,14 @@ run_sikraken() {
     # Safe defaults
     GCC_FLAG="${GCC_FLAG:-}"
     BENCH="${BENCH:-}"
+    benchmark_relative_path=$(realpath --relative-to="$SIKRAKEN_ROOT" "$BENCH")
 
     "$SIKRAKEN_ROOT/bin/sikraken.sh" \
         "$MODE" \
         "$GCC_FLAG" \
         budget["$BUDGET"] \
         --ss="$STACK_SIZE_GB" \
-        "$BENCH"
+        "$benchmark_relative_path"
 }
 
 copy_i_files_to_output() {
@@ -162,7 +163,6 @@ echo "TIMESTAMP: $TIMESTAMP"
 echo "CATEGORY: $CATEGORY"
 echo "SHARED_OUTPUT: $OUTPUT_SHARED"
 RUN_OUTPUT_DIR="$OUTPUT_SHARED/$CATEGORY/$TIMESTAMP"
-ls $RUN_OUTPUT_DIR
 mkdir -p "$RUN_OUTPUT_DIR"
 
 INDEX=0
@@ -172,7 +172,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     IFS="|" read -r BENCH DATA_MODEL <<< "$entry"
 
     #May need to account for .i  as well
-    NAME="$(basename "$BENCH" .c)"
+    NAME="$(basename "$BENCH")"
     echo "NAME: $NAME"
     OUTDIR="$RUN_OUTPUT_DIR/$NAME"
     echo "OUTDIR: $OUTDIR"  
@@ -192,7 +192,7 @@ for entry in "${ALL_BENCHMARKS[@]}"; do
     SIKRAKEN_EXIT=$?
     if [[ $SIKRAKEN_EXIT -ne 0 ]]; then
         echo "WARNING: Sikraken exited with code $SIKRAKEN_EXIT for $BENCH"
-        ls /app/sikraken$BENCH
+        find /app/sikraken$BENCH
     else
         echo "Sikraken exited successfully for $BENCH"
     fi
