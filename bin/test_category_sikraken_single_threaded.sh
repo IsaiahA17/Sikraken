@@ -298,7 +298,7 @@ echo "Duration: $duration_hms" >> $log_file
 #echo "Sikraken $script_name log: now calling $generate_summary"
 #$generate_summary
 
-S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}"
+S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}/${TIMESTAMP}"
 echo "$S3_PREFIX"
 aws s3 sync "$output_dir" "$S3_PREFIX" --exclude "*.i" --exclude "*.log"
 
