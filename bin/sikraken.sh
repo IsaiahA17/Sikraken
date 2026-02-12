@@ -171,10 +171,15 @@ budget=$((budget-cpu_spent))
 if [ "$budget" -lt 4 ]; then
     budget=4
 fi
-echo "Remaining budget is $budget"
+echo "Remaining budget is $budget seconds"
+
 dump_time=$((budget - 1))
-prlimit --cpu="${dump_time}:${budget}" bash -lc "$eclipse_call"
- 
+
+#Time out takes place 2 seconds after budget ends as a secondary measure for potential hanging time
+timeout  --kill-after=2s "${budget}s" \
+prlimit --cpu="${dump_time}:${budget}" \
+bash -lc "$eclipse_call"
+
 ret_code=$?
 if [ $ret_code -eq 137 ]; then  #sigkill
     echo "Like tears in rain..."
