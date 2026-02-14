@@ -16,7 +16,7 @@ ls /shared/benchmarks
 
 S3_BUCKET_NAME="ecs-benchmarks-output"
 S3_BUCKET="${S3_BUCKET_NAME:?S3_BUCKET not set}"
-CORES="${CORES:-4}"
+CORES="${CORES:-1}"
 STACK_SIZE_GB="${STACK_SIZE_GB:-3}"
 CATEGORY="${CATEGORY:-chris}"
 MODE="${MODE:-release}"
@@ -227,18 +227,18 @@ mapfile -t PATTERNS < <(
     grep -o '.*\/.*\.yml' "$full_path_to_category_file" | sort
 )
 
-if (( SHARD_INDEX >= SHARD_COUNT )); then
-    echo "ERROR: SHARD_INDEX ($SHARD_INDEX) >= SHARD_COUNT ($SHARD_COUNT)"
+if (( TASK_INDEX >= TASK_COUNT )); then
+    echo "ERROR: TASK_INDEX ($TASK_INDEX) >= TASK_COUNT ($TASK_COUNT)"
     exit 1
 fi
 
 for i in "${!PATTERNS[@]}"; do
-    if (( i % SHARD_COUNT != SHARD_INDEX )); then
+    if (( i % TASK_COUNT != TASK_INDEX )); then
         continue
     fi
 
     pattern_benchmark_directory="${PATTERNS[$i]}"
-    echo "Shard $SHARD_INDEX processing pattern: $pattern_benchmark_directory"
+    echo "Shard $TASK_INDEX processing pattern: $pattern_benchmark_directory"
 
     for yml_file in "$path_to_benchmarks"/$pattern_benchmark_directory; do
         # Exclude files listed in the exclusion set
