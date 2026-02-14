@@ -29,10 +29,10 @@ show_help() {
     echo "Usage: ./sikraken.sh <mode> <algorithm> [data_model] [stack_size] <c_file>"
     echo ""
     echo "Arguments:"
-    echo "  <mode>           : debug or release (affects compiler flags and Sikraken's behavior)."
+    echo "  <mode>           : debug (default) or release (only affects the test generation)."
     echo "  <algorithm>      : budget[seconds] (e.g., budget[900]) or regression[restarts,tries] (e.g., regression[1,100])."
-    echo "  [data_model]     : -m32 or -m64 (defaults to -m32)."
-    echo "  [stack_size]     : --ss=STACK_SIZE (Stack size in GB, defaults to 3GB)."
+    echo "  [data_model]     : -m32 (default) or -m64."
+    echo "  [stack_size]     : --ss=STACK_SIZE (Stack size in decimal GB, defaults to 3GB)."
     echo "  <c_file>         : Relative path to the C source file (e.g., SampleCode/simple_if.c)."
     echo ""
     echo "Example: ./bin/sikraken.sh release budget[1] --ss=1 SampleCode/simple_if.c"
@@ -131,7 +131,7 @@ full_path_c_file="$SIKRAKEN_INSTALL_DIR/$rel_path_c_file"    #e.g. /home/chris/S
 file_name_no_ext="${rel_path_c_file%.*}"
 file_name_no_ext=$(basename "$file_name_no_ext")
 
-call_parser="$SIKRAKEN_INSTALL_DIR/bin/call_parser.sh $rel_path_c_file $data_model"
+call_parser="$SIKRAKEN_INSTALL_DIR/bin/call_parser.sh $data_model $rel_path_c_file"
 echo "Sikraken from $0 says: $call_parser"
 $call_parser
 ret_code=$?
@@ -166,22 +166,27 @@ cpu_spent_raw=$(awk -v start="$start_time" -v end="$end_time" 'BEGIN { print end
 
 echo "Sikraken: Preprocessing used ${cpu_spent_raw}s (Rounded up to ${cpu_spent}s for safety)"
 
+# Add wall-clock timeout with safety margin (20% extra to allow for CPU limit to trigger first)
+# to end then kill processes tha tjust hang without reaching cpu limit
+wall_timeout=$((budget + budget / 5))
+
 budget=$((budget-cpu_spent))
-#4 seconds is the minimum, to get stats info, prlimit only take integers
-if [ "$budget" -lt 4 ]; then
-    budget=4
+#3 seconds is the minimum, to get stats info, prlimit only take integers
+if [ "$budget" -lt 3 ]; then
+    budget=3
 fi
-echo "Remaining budget is $budget seconds"
-
+echo "Remaining budget is $budget"
 dump_time=$((budget - 1))
-
-#Time out takes place 2 seconds after budget ends as a secondary measure for potential hanging time
-timeout  --kill-after=2s "${budget}s" \
-prlimit --cpu="${dump_time}:${budget}" \
-bash -lc "$eclipse_call"
-
+# Run with both CPU limit and wall-clock timeout
+# 2> >(head -c 100K >&2) limits the messages to stderr (2>) to 100KB (trap '' PIPE tells bash to ignore the SIGPIPE (141) signal and carry on)
+timeout --kill-after=5 "${wall_timeout}" prlimit --cpu="${dump_time}:${budget}" bash -lc "trap '' PIPE; $eclipse_call" 2> >(head -c 100K >&2)
+ 
 ret_code=$?
-if [ $ret_code -eq 137 ]; then  #sigkill
+if [ $ret_code -eq 124 ]; then
+    echo -e "${RD}Sikraken ERROR: Process hung and exceeded wall-clock timeout of ${wall_timeout}s without consuming CPU time.${NC}"
+    echo -e "${RD}This likely indicates a hang condition (deadlock, infinite wait, or I/O block).${NC}"
+    exit 124
+elif [ $ret_code -eq 137 ]; then  #sigkill
     echo "Like tears in rain..."
     exit 0
 elif [ $ret_code -ne 0 ]; then
