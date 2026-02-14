@@ -131,7 +131,7 @@ full_path_c_file="$SIKRAKEN_INSTALL_DIR/$rel_path_c_file"    #e.g. /home/chris/S
 file_name_no_ext="${rel_path_c_file%.*}"
 file_name_no_ext=$(basename "$file_name_no_ext")
 
-call_parser="$SIKRAKEN_INSTALL_DIR/bin/call_parser.sh $data_model $rel_path_c_file"
+call_parser="$SIKRAKEN_INSTALL_DIR/bin/call_parser.sh $rel_path_c_file $data_model"
 echo "Sikraken from $0 says: $call_parser"
 $call_parser
 ret_code=$?
