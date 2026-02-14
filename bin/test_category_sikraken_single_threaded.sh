@@ -21,7 +21,7 @@ STACK_SIZE_GB="${STACK_SIZE_GB:-3}"
 CATEGORY="${CATEGORY:-chris}"
 MODE="${MODE:-release}"
 BUDGET="${BUDGET:-10}"
-TIMESTAMP="${TIMESTAMP:-$(date -u +"%Y_%m_%d_%H_%M")}"
+TIMESTAMP="${TIMESTAMP:?TIMESTAMP environment variable not set}"
 
 TASK_COUNT="${TASK_COUNT:-1}"   
 TASK_INDEX="${TASK_INDEX:-0}"   
