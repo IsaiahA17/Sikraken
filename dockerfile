@@ -27,10 +27,9 @@ ENV ECLIPSEDIR=/app/sikraken/eclipse
 ENV PATH="$ECLIPSEDIR/bin/x86_64_linux:$PATH"
 
 RUN chmod +x /app/sikraken/bin/test_category_sikraken_ecs.sh
-RUN chmod +x /app/sikraken/bin/test_category_sikraken_single_threaded.sh
 
 VOLUME ["/shared"]
 
 WORKDIR /app/sikraken
 
-ENTRYPOINT ["./bin/test_category_sikraken_single_threaded.sh"]
+ENTRYPOINT ["./bin/test_category_sikraken_ecs.sh"]
