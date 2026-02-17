@@ -321,7 +321,7 @@ run_benchmark
 #echo "Sikraken $script_name log: now calling $generate_summary"
 #$generate_summary
 
-upload_to_s3(){
+upload_benchmark_to_s3(){
     S3_PREFIX="s3://${S3_BUCKET}/${CATEGORY}/${TIMESTAMP}"
     echo "$S3_PREFIX"
     aws s3 sync "$output_dir" "$S3_PREFIX" --exclude "*.i" --exclude "*.log"
@@ -335,4 +335,4 @@ upload_to_s3(){
 
     echo "Sikraken $script_name log: has ended."
 }
-upload_to_s3
+upload_benchmark_to_s3
