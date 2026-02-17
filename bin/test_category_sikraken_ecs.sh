@@ -154,7 +154,7 @@ retrieve_category_file(){
         echo "Sikraken $script_name log: Using the exclude set: "$exclude_set""
     fi
 
-    echo "Sikraken $script_name log: called: "$script_name $@""
+    echo "Sikraken $script_name log: called: $script_name $@"
 }
 retrieve_category_file()
 
