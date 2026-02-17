@@ -122,7 +122,7 @@ check_benchmarks_path(){
         exit 1
     fi
 }
-check_benchmarks_path()
+check_benchmarks_path
 
 retrieve_category_file(){
     category_file="$category".set   #input file describing the category
@@ -156,7 +156,7 @@ retrieve_category_file(){
 
     echo "Sikraken $script_name log: called: $script_name $@"
 }
-retrieve_category_file()
+retrieve_category_file
 
 compile_parser(){
     # re-compile the parser in case it changed during development
@@ -168,14 +168,14 @@ compile_parser(){
         echo "Sikraken $script_name log: Sikraken parser successfully recompiled"
     fi
 }
-compile_parser()
+compile_parser
 
 set_output_directory(){
     output_dir="$OUTPUT_SHARED/$TIMESTAMP"
     echo "The output dir is $output_dir"
     mkdir -p "$output_dir"
 }
-set_output_directory()
+set_output_directory
 # function: generate_tests runs single threaded for ECS
 # and terminated with 'return 1' instead of 'exit 1'.
 generate_tests() {
@@ -311,7 +311,7 @@ run_benchmark(){
     echo "Duration: $duration_hms" >> $log_file
 }
 
-run_benchmark()
+run_benchmark
 #generate_table_script="$SIKRAKEN_INSTALL_DIR/SikrakenDevSpace/bin/helper/create_category_test_run_table.sh $output_dir"
 #echo "Sikraken $script_name: now calling $generate_table_script"
 #$generate_table_script
@@ -335,4 +335,4 @@ upload_to_s3(){
 
     echo "Sikraken $script_name log: has ended."
 }
-upload_to_s3()
+upload_to_s3
