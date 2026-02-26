@@ -27,7 +27,7 @@ ls /shared/benchmarks
 S3_BUCKET_NAME="ecs-benchmarks-output"
 S3_BUCKET="${S3_BUCKET_NAME:?S3_BUCKET not set}"
 CORES="${CORES:-1}"
-STACK_SIZE_GB="${STACK_SIZE_GB:-3}"
+STACK_SIZE_GB="${STACK_SIZE_GB:-3072}"
 CATEGORY="${CATEGORY:-chris}"
 MODE="${MODE:-release}"
 BUDGET="${BUDGET:-10}"
@@ -48,18 +48,6 @@ script_name=$(basename "$0")
 
 echo "Run all the benchmarks from a TestComp category using SIKRAKEN_INSTALL_DIR=$SIKRAKEN_INSTALL_DIR"
 
-# --- Check minimum args ---
-# Allow up to 8 arguments: 5 required + 3 optional (-scg, -no_testcov, -ss VALUE)
-#if [ $# -lt 5 ] || [ $# -gt 8 ]; then
-#   echo "Sikraken ERROR from $script_name:"
-#    echo "Usage: $script_name <path_to_benchmarks> <category> <cores> <budget> <mode> [OPTIONS]"
-#    echo "Options: [-scg] [-no_testcov] [--ss=STACK_SIZE] [-bh]"
-#    exit 1
-#fi
-
-# Save the full original invocation (script + args) before any shift
-#ORIG_ARGV=("$0" "$@")
-
 # --- Required arguments ---
 path_to_benchmarks="/shared/benchmarks"
 category=$CATEGORY
@@ -72,7 +60,7 @@ shortcutgen=""
 shortcutgen_flag=0
 no_testcov=1 #Setting To 1 as no testcov usage yet in ECS version
 branch_highlight=0
-stack_size_gb=3
+stack_size_gb=$((STACK_SIZE_GB / 1024))
 
 # --- Process Optional Arguments (Shift and Loop) ---
 if [ $# -gt 0 ]; then
