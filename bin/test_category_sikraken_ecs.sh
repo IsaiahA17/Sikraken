@@ -219,8 +219,8 @@ generate_tests() {
 ### MAIN starts here
 start_wall_time=$(date +"%Y-%m-%d %H:%M:%S")    # Capture human-readable time and Unix timestamp for start
 start_ts=$(date +%s)
-
-category_extracted_benchmarks_files="$output_dir"/benchmark_files.txt  #output list of benchmarks for the category
+mkdir -p "$output_dir/benchmark_files"
+category_extracted_benchmarks_files="$output_dir"/benchmark_files/benchmark_files-$TASK_INDEX.txt  #output list of benchmarks for the category
 log_file="$output_dir"/category_test_run.log
 
 #printf -v orig_cmd '%q ' "${ORIG_ARGV[@]}"
