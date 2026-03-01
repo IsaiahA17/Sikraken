@@ -99,6 +99,9 @@ echo "budget             = $budget"
 echo "mode               = $mode"
 echo "shortcutgen        = $shortcutgen"
 echo "no_testcov         = $no_testcov"
+echo "task_index         = $TASK_INDEX"
+echo "task_count         = $TASK_COUNT"
+echo "stack_size         = $stack_size_gb"
 
 check_benchmarks_path(){
     # Check if the path_to_benchmarks exists
@@ -237,7 +240,7 @@ retrieve_all_yml_files() {
 
 retrieve_all_yml_files
 
-download_assigned_directories() {
+download_assigned_benchmarks() {
     TESTCOMP_BUCKET="testcomp-benchmarks"
     TESTCOMP_BUCKET_PREFIX="c"
 
@@ -250,14 +253,42 @@ download_assigned_directories() {
 
         rel_path="${PATTERNS[$i]}"
         dir_name="$(dirname "$rel_path")"
+        local_yml_path="$path_to_benchmarks/$rel_path"
 
-        echo "Syncing directory $dir_name"
+        echo "Downloading YAML: $rel_path"
 
-        aws s3 sync \
-            "s3://$TESTCOMP_BUCKET/$TESTCOMP_BUCKET_PREFIX/$dir_name/" "$path_to_benchmarks/$dir_name/"
+        mkdir -p "$path_to_benchmarks/$dir_name"
+
+        aws s3 cp \
+            "s3://$TESTCOMP_BUCKET/$TESTCOMP_BUCKET_PREFIX/$rel_path" \
+            "$local_yml_path"
+
+        if [ ! -f "$local_yml_path" ]; then
+            echo "Sikraken ERROR: Failed to download $rel_path"
+            continue
+        fi
+
+        benchmark_file=$(grep "input_files:" "$local_yml_path" \
+            | sed -n "s/^[[:space:]]*input_files:[[:space:]]*\(['\"]\?\)\(.*\)\1/\2/p")
+
+        if [ -z "$benchmark_file" ]; then
+            echo "Sikraken ERROR: Could not extract input_files from $rel_path"
+            continue
+        fi
+
+        echo "Downloading benchmark input file: $dir_name/$benchmark_file"
+
+        aws s3 cp \
+            "s3://$TESTCOMP_BUCKET/$TESTCOMP_BUCKET_PREFIX/$dir_name/$benchmark_file" \
+            "$path_to_benchmarks/$dir_name/$benchmark_file"
+
+        if [ $? -ne 0 ]; then
+            echo "Sikraken ERROR: Failed to download benchmark file $benchmark_file"
+            continue
+        fi
     done
 }
-download_assigned_directories
+download_assigned_benchmarks
 
 run_benchmark(){
     for i in "${!PATTERNS[@]}"; do
