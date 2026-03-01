@@ -18,6 +18,7 @@
 clear
 
 echo "Starting Sikraken Batch run..."
+mkdir -p "/benchmarks"
 
 S3_BUCKET_NAME="ecs-benchmarks-output"
 S3_BUCKET="${S3_BUCKET_NAME:?S3_BUCKET not set}"
