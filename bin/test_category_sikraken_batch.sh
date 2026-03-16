@@ -22,6 +22,8 @@ mkdir -p "/benchmarks"
 
 S3_BUCKET_NAME="${S3_BUCKET_NAME:-ecs-benchmarks-output}"
 S3_BUCKET="${S3_BUCKET_NAME:?S3_BUCKET not set}"
+S3_TESTCOMP_BUCKET_NAME="${S3_TESTCOMP_BUCKET_NAME:-testcomp-benchmarks}"
+#S3_TESTCOMP_BUCKET="${S3_BUCKETS3_TESTCOMP_BUCKET_NAME_NAME:?S3_TESTCOMP_BUCKET_NAME not set}"
 CORES="${CORES:-1}"
 STACK_SIZE_GB="${STACK_SIZE_GB:-3072}"
 CATEGORY="${CATEGORY:-chris}"
@@ -241,7 +243,7 @@ retrieve_all_yml_files() {
 retrieve_all_yml_files
 
 download_assigned_benchmarks() {
-    TESTCOMP_BUCKET="testcomp-benchmarks"
+    TESTCOMP_BUCKET="test1-testcomp-benchmarks"
     TESTCOMP_BUCKET_PREFIX="c"
 
     mkdir -p "$path_to_benchmarks"
